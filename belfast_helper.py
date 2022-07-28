@@ -284,8 +284,8 @@ def map_correlation(ref_data, tobe_shifted_data, iterations = 3, map_shift = Fal
 #hrt, hmi
     sy = int(tobe_shifted_data.shape[0]*0.1)
     sx = int(tobe_shifted_data.shape[1]*0.1)
-    ref = ref_data[sy:-sy,sx:-sx].copy()
-    temp = tobe_shifted_data[sy:-sy,sx:-sx].copy(); 
+    ref = ref_data[sy:-sy,sx:-sx]
+    temp = tobe_shifted_data[sy:-sy,sx:-sx] 
         
     shift = [0,0]
     for i in range(iterations):
@@ -405,3 +405,25 @@ def image_register(ref,im,subpixel=True,deriv=True):
     del FT1, FT2
 
     return r, shifts
+
+def fft_shift(img,shift):
+    """
+    im: 2D-image to be shifted
+    shift = [dy,dx] shift in pixel
+    """
+    
+    try:
+        import pyfftw.interfaces.numpy_fft as fft
+    except:
+        import numpy.fft as fft
+    sz = img.shape
+    ky = fft.ifftshift(np.linspace(-np.fix(sz[0]/2),np.ceil(sz[0]/2)-1,sz[0]))
+    kx = fft.ifftshift(np.linspace(-np.fix(sz[1]/2),np.ceil(sz[1]/2)-1,sz[1]))
+
+    img_fft = fft.fft2(img)
+    shf = np.exp(-2j*np.pi*(ky[:,np.newaxis]*shift[0]/sz[0]+kx[np.newaxis]*shift[1]/sz[1]))
+    
+    img_fft *= shf
+    img_shf = fft.ifft2(img_fft).real
+    
+    return img_shf
