@@ -279,3 +279,129 @@ def noise_both(stokes_V, blos):
 
     plt.tight_layout()
     plt.show()
+    
+def map_correlation(ref_data, tobe_shifted_data, iterations = 3, map_shift = False):
+#hrt, hmi
+    sy = int(tobe_shifted_data.shape[0]*0.1)
+    sx = int(tobe_shifted_data.shape[1]*0.1)
+    ref = ref_data[sy:-sy,sx:-sx].copy()
+    temp = tobe_shifted_data[sy:-sy,sx:-sx].copy(); 
+        
+    shift = [0,0]
+    for i in range(iterations):
+        #iterate shifting the maps, until convergence after 3 iterations
+        r,s = image_register(standardize(ref),standardize(temp)/temp.size,deriv=False)
+        print('iter '+str(i+1)+', shift (x,y):',round(s[1],3),round(s[0],3))
+        shift = [shift[0]+s[0],shift[1]+s[1]]
+#         temp = interp_shift(temp,s, order=5, cval=1.)
+        temp = fft_shift(temp,s)
+
+    print(iterations,'iterations shift (x,y):',round(shift[1],3),round(shift[0],3))
+#     temp = interp_shift(hmi_temp.data, shift, order=5, cval=1.)
+    temp = fft_shift(tobe_shifted_data, shift)
+    #hmi_shift = sunpy.map.Map((temp,hmi_temp.fits_header))
+    #hmi_shift.plot_settings = hmi_temp.plot_settings
+
+    if map_shift:
+        return (shift, hmi_shift)
+    else:
+        return shift, temp
+
+def standardize(array):
+    return (array - array.mean())/array.std()
+
+def one_power(array):
+    return array/np.sqrt((np.abs(array)**2).mean())
+
+def image_register(ref,im,subpixel=True,deriv=True):
+    try:
+        import pyfftw.interfaces.numpy_fft as fft
+    except:
+        import numpy.fft as fft
+    import numpy as np
+    import sys
+
+    def _image_derivative(d):
+        import numpy as np
+        from scipy.signal import convolve
+        kx = np.asarray([[1,0,-1], [1,0,-1], [1,0,-1]])
+        ky = np.asarray([[1,1,1], [0,0,0], [-1,-1,-1]])
+
+        kx=kx/3.
+        ky=ky/3.
+
+        SX = convolve(d, kx,mode='same')
+        SY = convolve(d, ky,mode='same')
+
+        A=SX+SY
+
+        return A
+
+    def _g2d(X, offset, amplitude, sigma_x, sigma_y, xo, yo, theta):
+        import numpy as np
+        (x, y) = X
+        xo = float(xo)
+        yo = float(yo)    
+        a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
+        b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
+        c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
+        g = offset + amplitude*np.exp( - (a*((x-xo)**2) + 2*b*(x-xo)*(y-yo) 
+                                + c*((y-yo)**2)))
+        return g.ravel()
+
+
+    def _gauss2dfit(a):
+        import numpy as np
+        from scipy.optimize import curve_fit
+        sz = np.shape(a)
+        X,Y = np.meshgrid(np.arange(sz[1])-sz[1]//2,np.arange(sz[0])-sz[0]//2)
+
+        try:
+            X = X[~X.mask]; Y = Y[~Y.mask]; a = a[~a.mask]
+        except:
+            pass
+
+        c = np.unravel_index(a.argmax(),sz)
+        y = a[c[0],:]
+        x = X[c[0],:]
+        stdx = 5 #np.sqrt(abs(sum(y * (x - sum(x*y)/sum(y))**2) / sum(y)))
+        y = a[:,c[1]]
+        x = Y[:,c[1]]
+        stdy = 5 #np.sqrt(abs(sum(y * (x - sum(x*y)/sum(y))**2) / sum(y)))
+        initial_guess = [np.median(a), np.max(a), stdx, stdy, c[1] - sz[1]//2, c[0] - sz[0]//2, 0]
+        
+        popt, pcov = curve_fit(_g2d, (X, Y), a.ravel(), p0=initial_guess)
+
+        return np.reshape(_g2d((X,Y), *popt), sz), popt
+ 
+    if deriv:
+        ref = _image_derivative(ref)
+        im = _image_derivative(im)
+    
+    shifts=np.zeros(2)
+
+    FT1=fft.fftn(ref - np.mean(ref))
+    FT2=fft.fftn(im - np.mean(im))
+    ss=np.shape(ref)
+
+    # cross=FT1*np.conjugate(FT2)/np.sum((FT1*np.conjugate(FT2)))
+    r=np.real(fft.ifftn(one_power(FT1) * one_power(FT2.conj())))
+    # r = np.roll(r, ss[0]//2, axis = 0)
+    # r = np.roll(r, ss[1]//2, axis = 1)
+    r = fft.fftshift(r)
+    
+    rmax=np.max(r)
+    ppp = np.unravel_index(np.argmax(r),ss)
+
+    shifts = [(ss[0]//2-(ppp[0])),(ss[1]//2-(ppp[1]))]
+
+    if subpixel:
+        g, A = _gauss2dfit(r)
+        ss = np.shape(g)
+        shifts[0] = A[5]          
+        shifts[1] = A[4]
+        del g 
+
+    del FT1, FT2
+
+    return r, shifts
