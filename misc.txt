@@ -1,0 +1,123 @@
+# Miscellaneous 
+Trying to Rotate HRT onto HMI
+
+First we can use the inbuilt reprojection algorithm in sunpy, which uses the WCS information within the header of the FITS file, to remap it onto the HMI's FOV.
+
+We have to create an out_header using `sunpy.map.make_fitswcs_header` to be the output of the HRT remapped image.
+
+#Show how to rotate HRT onto HMI plane
+out_shape = hmi_m.data.shape #this means that the hrt remapped image will have the same dimensions as the hmi image
+
+out_header = sunpy.map.make_fitswcs_header(
+    out_shape,
+    hmi_m.reference_coordinate.replicate(rsun=hrt_blos_m.reference_coordinate.rsun),
+    scale=u.Quantity(hmi_m.scale),
+    instrument="PHI",
+    observatory="HMI Observer"
+)
+
+Now we apply the reprojection (this can take 30 seconds or longer)
+
+hrt_blos_mr = hrt_blos_m.reproject_to(out_header, algorithm = "adaptive")
+
+fig = plt.figure(figsize = (14,14))
+
+ax1 = fig.add_subplot(121, projection=hmi_m)
+hmi_m.plot(axes=ax1)
+hmi_m.draw_limb(axes=ax1, color='white')
+
+ax2 = fig.add_subplot(122)
+ax2.imshow(hrt_blos_mr.data, origin = "lower", cmap = "gray")
+plt.clim(-100,100)
+
+hrt_blos_mr.data.shape
+
+u.deg.to(u.arcsec, hrt_blos_mr.scale.axis1)
+
+hmi_m.scale.axis1
+
+# blink test
+
+plt.figure()
+plt.imshow(hmi_blos.data, origin = "lower", cmap = "gist_heat")
+plt.clim(-100,100)
+plt.show()
+
+hmi_degrad = hmi_blos.resample(u.Quantity(hmi_blos.dimensions)/7.09)
+
+plt.figure()
+plt.imshow(hmi_degrad.data, origin = "lower", cmap = "gist_heat")
+plt.clim(-100,100)
+plt.show()
+plt.savefig("./hmi_test.png")
+
+print(hmi_degrad.scale.axis1, hmi_degrad.dimensions.x)
+print(hmi_degrad.scale.axis2, hmi_degrad.dimensions.y)
+
+plt.figure()
+plt.imshow(fdt_outmap.data, origin = "lower", cmap = "gist_heat")
+plt.clim(-100,100)
+plt.show()
+
+plt.figure()
+plt.imshow(fdt_outmap.data[223:-223,223:-223], origin = "lower", cmap = "gist_heat")
+plt.clim(-100,100)
+plt.show()
+plt.savefig("./fdt_test.png")
+
+print(hmi_blos.scale.axis1, hmi_blos.dimensions.x)
+print(hmi_blos.scale.axis2, hmi_blos.dimensions.y)
+print("#")
+print(fdt_outmap.scale.axis1, fdt_outmap.dimensions.x)
+print(fdt_outmap.scale.axis2, fdt_outmap.dimensions.y)
+
+# testing logpol on the blink maps
+
+imref = fdt_outmap.data[223+200:-423,423:-423]
+imtemp = hmi_degrad.data[200:-200,200:-200]
+r = imreg_dft.similarity(imref,imtemp,numiter=3)
+
+#pollog transform
+fdt_logpol = imreg_dft.transform_img(fdt_outmap.data,scale=1,angle=r['angle'])
+
+h = fdt_outmap.fits_header
+#h.append(('SHIFTX',r['tvec'][1],'shift along X axis (HRT-pixel)'),end=True)
+#h.append(('SHIFTY',r['tvec'][0],'shift along Y axis (HRT-pixel)'),end=True)
+h.append(('RANGLE',r['angle'],'rotation angle (deg)'),end=True)
+print(r)
+fdt_logpol = sunpy.map.Map((fdt_logpol,h))
+
+plt.figure()
+plt.imshow(fdt_logpol[223:-223,223:-223], origin = "lower", cmap = "gist_heat")
+plt.clim(-100,100)
+plt.show()
+plt.savefig("./fdt_test_logpol.png")
+
+# Here you can see one of the issues, the FDT header info seems to be in degrees not arcseconds, one of the reasons why the sunpy.image.coalignemnt fails (and the reproject_to method creates nans)
+
+# This is where I attempt cross-correlation and it all goes wrong
+
+(Because the blue Limb line doesn't match up with the fdt_outmap for some reason)
+
+As you can see from the blue limb, and the image, there is a slight offset in pixels in the x direction.
+
+The pointing information in SO/PHI-FDT might be off by a few pixels. So we perform a cross correlation (also built in with sunpy) to correct for this.
+
+#down sample hmi to match the lower resolution on fdt
+hmi_blos_r = hmi_blos.resample(fdt_outmap.dimensions*u.pix)
+
+shift, fdt_shift = map_correlation(hmi_blos_r.data, mapf.data, iterations = 3, map_shift = False)
+h = fdt_outmap.fits_header
+h.append(('SHIFTX',shift[1],'shift along X axis (HRT-pixel)'),end=True)
+h.append(('SHIFTY',shift[0],'shift along Y axis (HRT-pixel)'),end=True)
+h.append(('RANGLE',0,'rotation angle (deg)'),end=True)
+fdt_shift = sunpy.map.Map((fdt_shift,h))
+fdt_shift.plot_settings['cmap'] = "hmimag"
+fdt_shift.plot_settings['norm'] = plt.Normalize(-1500, 1500)
+
+fig = plt.figure(figsize = (14,14))
+ax1 = fig.add_subplot(121, projection=hmi_blos)
+hmi_blos.plot(axes=ax1)
+ax2 = fig.add_subplot(122, projection=fdt_shift)
+fdt_shift.plot(axes=ax2, title='FDT image as seen from SDO')
+fdt_blos.draw_limb(axes=ax2, color='blue')
