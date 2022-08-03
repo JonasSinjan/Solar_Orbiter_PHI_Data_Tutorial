@@ -1,0 +1,8 @@
+sunpy>=3.0.0
+numpy
+scipy
+astropy
+sunpy_soar
+matplotlib
+time
+reproject
