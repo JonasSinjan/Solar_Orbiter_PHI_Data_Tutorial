@@ -34,9 +34,86 @@ def load_field_stop(path = None):
     
     return field_stop
 
+def plot_fdt_phys_obs(inver_data, suptitle = None): 
+    """plot the physical observables from fdt
+    
+    Parameters
+    ----------
+    inver_data: numpy array
+        FDT physcial observables in format: np.asarray([fdt_icnt, fdt_bmag, fdt_binc, fdt_bazi, fdt_vlos, fdt_blos])
+        or '...rte_data_products.fits' file
+    suptitle: str
+        Name for the plot.
+    
+    Returns
+    -------
+    None
+    """
+    icnt = inver_data[0,:,:]
+    bmag = inver_data[1,:,:]
+    binc = inver_data[2,:,:]
+    bazi = inver_data[3,:,:]
+    blos = inver_data[5,:,:]
+    
+    fig, (ax1, ax2, ax3) = plt.subplots(3,2, figsize = (15,18))
+
+    im4 = ax1[0].imshow(icnt, cmap = "gist_heat", origin="lower") #continuum
+    im1 = ax1[1].imshow(bmag, cmap = "plasma", origin="lower") #field strength
+    im2 = ax2[0].imshow(binc, cmap = "RdGy", origin="lower") #field inclination
+    im3 = ax2[1].imshow(bazi, cmap = "viridis", origin="lower") #field azimuth
+    
+    #mean correct vlos
+    vlos2 = inver_data[4,:,:]
+    vlos3 = vlos2 - np.mean(inver_data[4,512:1535,512:1535])
+        
+    seis = plt.cm.seismic
+    norm = plt.Normalize(-2, 2, clip = True)
+    rgba_4 = seis(norm(vlos3))
+        
+    gray = plt.cm.gray
+    norm = plt.Normalize(-100, 100, clip = True)
+    rgba_5 = gray(norm(blos))
+    
+    im5 = ax3[0].imshow(rgba_4, cmap = seis, origin="lower") 
+    im6 = ax3[1].imshow(rgba_5, cmap = gray, origin="lower")
+
+    fig.colorbar(im4, ax=ax1[0],fraction=0.046, pad=0.04)
+    fig.colorbar(im1, ax=ax1[1],fraction=0.046, pad=0.04)
+    fig.colorbar(im2, ax=ax2[0],fraction=0.046, pad=0.04)
+    fig.colorbar(im3, ax=ax2[1],fraction=0.046, pad=0.04)
+    fig.colorbar(im5, ax=ax3[0],fraction=0.046, pad=0.04)
+    fig.colorbar(im6, ax=ax3[1],fraction=0.046, pad=0.04)
+
+    im1.set_clim(0, 1000)
+    im2.set_clim(0,180)
+    im3.set_clim(0,180)
+    im4.set_clim(0,1.2)
+    im5.set_clim(-2,2)
+    im6.set_clim(-100,100)
+
+    ax1[1].set_title(r'Magnetic Field Strength [Gauss]')
+    ax2[0].set_title(f'Inclination [Degrees]')
+    ax2[1].set_title(r'Azimuth [Degrees]')
+    ax1[0].set_title("Continuum Intensity")#f'LOS Magnetic Field (Gauss)')
+    ax3[0].set_title(r'Vlos [km/s]')
+    ax3[1].set_title(r'Blos [Gauss]')
+    
+    ax1[0].text(35,40, '(a)', color = "white", size = 'x-large')
+    ax1[1].text(35,40, '(b)', color = "white", size = 'x-large')
+    ax2[0].text(35,40, '(c)', color = "white", size = 'x-large')
+    ax2[1].text(35,40, '(d)', color = "white", size = 'x-large')
+    ax3[0].text(35,40, '(e)', color = "white", size = 'x-large')
+    ax3[1].text(35,40, '(f)', color = "white", size = 'x-large')
+    
+    if suptitle is not None:
+        fig.suptitle(suptitle)
+        
+    plt.tight_layout()
+    plt.show()
+
 
 def plot_hrt_phys_obs(inver_data, suptitle = None, field_stop = None): 
-    """plot the physical observables from hrt/fdt
+    """plot the physical observables from hrt
     
     Parameters
     ----------
@@ -144,8 +221,86 @@ def plot_hrt_phys_obs(inver_data, suptitle = None, field_stop = None):
     plt.show()
     
     
+def plot_fdt_stokes(stokes_arr, wv, subsec = None, title = None):
+    """plot fdt stokes maps at one wavelength
+
+    Parameters
+    ----------
+    stokes_arr : numpy ndarray
+        Full FDT Stokes Array.
+    wv : int
+        Index for the desired wavelength position.
+    subsec: numpy ndarray
+        Region of interest to be plotted [start_x,end_x,start_y,end_y]
+    title: str
+        Title of figure
+        
+    Returns
+    -------
+    None
+    """
+    fig, (ax1, ax2) = plt.subplots(2,2, figsize = (15,12))
+
+    
+    gist = plt.cm.gist_heat
+    norm = plt.Normalize(-0.01, 0.01, clip = True)
+    rgba_0 = gist(norm(stokes_arr[wv,1,:,:]))
+    
+    rgba_1 = gist(norm(stokes_arr[wv,2,:,:]))
+    
+    rgba_2 = gist(norm(stokes_arr[wv,3,:,:]))
+    
+    if subsec is not None:
+        start_row, end_row = subsec[2:4]
+        start_col, end_col = subsec[:2]
+        assert len(subsec) == 4
+        assert start_row >= 0 and start_row < 2048
+        assert end_row >= 0 and end_row < 2048
+        assert start_col >= 0 and start_col < 2048
+        assert end_col >= 0 and end_col < 2048
+        
+    else:
+        start_row, start_col = 0,0
+        end_row, end_col = stokes_arr.shape[2]-1,stokes_arr.shape[3]-1
+        
+    
+    im1 = ax1[0].imshow(stokes_arr[wv,0,start_row:end_row,start_col:end_col], cmap = "gist_heat", origin="lower") 
+    im2 = ax1[1].imshow(rgba_0[start_row:end_row,start_col:end_col], cmap = gist, origin="lower")
+    im3 = ax2[0].imshow(rgba_1[start_row:end_row,start_col:end_col], cmap = gist, origin="lower") 
+    im4 = ax2[1].imshow(rgba_2[start_row:end_row,start_col:end_col], cmap = gist, origin="lower")
+
+    fig.colorbar(im1, ax=ax1[0],fraction=0.046, pad=0.04)
+    fig.colorbar(im2, ax=ax1[1],fraction=0.046, pad=0.04,ticks=[-0.01, -0.005, 0, 0.005, 0.01])
+    fig.colorbar(im3, ax=ax2[0],fraction=0.046, pad=0.04,ticks=[-0.01, -0.005, 0, 0.005, 0.01])
+    fig.colorbar(im4, ax=ax2[1],fraction=0.046, pad=0.04,ticks=[-0.01, -0.005, 0, 0.005, 0.01])
+    
+    clim = 0.01
+
+    im1.set_clim(0, 1.2)
+    im2.set_clim(-clim, clim)
+    im3.set_clim(-clim, clim)
+    im4.set_clim(-clim, clim)
+    
+    ax1[0].set_title(r'I/<I_c>')
+    ax1[1].set_title(f'Q/<I_c>')
+    ax2[0].set_title(r'U/<I_c>')
+    ax2[1].set_title(f'V/<I_c>')
+
+    ax1[0].text(35,40, '(a)', color = "white", size = 'x-large')
+    ax1[1].text(35,40, '(b)', color = "white", size = 'x-large')
+    ax2[0].text(35,40, '(c)', color = "white", size = 'x-large')
+    ax2[1].text(35,40, '(d)', color = "white", size = 'x-large')
+    
+    if isinstance(title,str):
+         plt.suptitle(title)
+    else:
+        plt.suptitle(f"SO/PHI-FDT Stokes at Wavelength Index: {wv}")
+    plt.tight_layout()
+    plt.show()
+    
+    
 def plot_hrt_stokes(stokes_arr, wv, subsec = None, title = None):
-    """plot histograms with Gaussian fit of Stokes V and Blos
+    """plot hrt stokes maps at one wavelength
 
     Parameters
     ----------
@@ -227,8 +382,8 @@ def plot_hrt_stokes(stokes_arr, wv, subsec = None, title = None):
     plt.show()
     
     
-def plot_noise_both(stokes_V, blos):
-    """plot histograms with Gaussian fit of Stokes V and Blos
+def plot_hrt_noise_both(stokes_V, blos):
+    """plot histograms with Gaussian fit of Stokes V and Blos of the HRT files
 
     Parameters
     ----------
@@ -302,189 +457,3 @@ def plot_noise_both(stokes_V, blos):
    
     plt.tight_layout()
     plt.show()
-    
-    
-def remap_hmi_og_scale_n(hrt_map, hmi_map, out_shape = (256,256)):
-    """remap hmi, leaving resolution untouched
-
-    Parameters
-    ----------
-    hrt_map : sunpy.map.Map
-        HRT sunpy map object.
-    hmi_map : sunpy.map.Map
-        HMI sunpy map object.
-    out_shape : tuple
-        Optional output size of remapped HMI.
-
-    Returns
-    -------
-    hrt_map : sunpy.map.Map
-        HRT input sunpy map object.
-    hmi_map : sunpy.map.Map
-        HMI remapped sunpy map object.
-    """
-    # define new header for hmi map using hrt observer coordinates
-    out_header = sunpy.map.make_fitswcs_header(
-        out_shape,
-        hrt_map.reference_coordinate.replicate(rsun=hmi_map.reference_coordinate.rsun),
-        scale=u.Quantity(hmi_map.scale),
-        instrument="HMI",
-        observatory="SDO",
-        wavelength=hmi_map.wavelength
-    )
-
-    out_header['dsun_obs'] = hmi_map.coordinate_frame.observer.radius.to(u.m).value
-    out_header['hglt_obs'] = hrt_map.coordinate_frame.observer.lat.value
-    out_header['hgln_obs'] = hrt_map.coordinate_frame.observer.lon.value
-
-    out_header['crota2'] = hrt_map.fits_header['CROTA']
-    
-    out_header['PC1_1'] = hrt_map.fits_header['PC1_1']
-    out_header['PC1_2'] = hrt_map.fits_header['PC1_2']
-    out_header['PC2_1'] = hrt_map.fits_header['PC2_1']
-    out_header['PC2_2'] = hrt_map.fits_header['PC2_2']
-
-    out_wcs = WCS(out_header)
-    
-    # reprojection
-    hmi_origin = hmi_map
-    output, footprint = reproject_adaptive(hmi_origin, out_wcs, out_shape)
-    hmi_map = sunpy.map.Map(output, out_header)
-    hmi_map.plot_settings = hmi_origin.plot_settings
-
-    return (hrt_map,hmi_map)
-
-
-def hmi_match_hrt_degrade(hmi_file,hrt_file, r_in = None):
-    """reproject hmi onto hrt FOV and degrade HRT to match HMI resolution
-
-    Parameters
-    ----------
-    hmi_file : str
-        HMI file path.
-    hrt_file : str
-        HRT file path.
-    r_in : dict
-        Optional dict for rotation metrics.
-
-    Returns
-    -------
-    hmi_logpol
-        Sunpy.map.Map of HMI file.
-    hrt_resampled_map
-        Sunpy.map.Map of HRT resampled (degraded to HMI) file.
-    r
-        Dict of rotation vector
-    """
-    start_time = time.perf_counter()
-    # correction for geometrical distorsion
-    h = fits.getheader(hrt_file)
-    h.append(('GDISTXC',1016,'geometrical distortion X-center coordinate'),end=True)
-    h.append(('GDISTYC',982,'geometrical distortion Y-center coordinate'),end=True)
-    h.append(('GDISTK',8e9,'geometrical distortion K value'),end=True)
-    h['HISTORY'] = 'Map corrected for gemoetrical distortion (valid for not flipped maps)'
-
-    mapc = plt.get_cmap('gray')
-
-    #hrt map
-    hrt_map = sunpy.map.Map((und(fits.getdata(hrt_file)[:,::-1]),h))
-    hrt_map.plot_settings['cmap'] = mapc
-    
-    #hmi map
-    hmi_map = sunpy.map.Map(hmi_file)
-    hmi_shape = hmi_map.data.shape
-    hmi_map.plot_settings['cmap'] = mapc
-    
-    hrt_map.plot_settings['norm'].vmin = -100
-    hrt_map.plot_settings['norm'].vmax = 100
-    hmi_map.plot_settings['norm'].vmin = -100
-    hmi_map.plot_settings['norm'].vmax = 100
-
-    #remap hmi with WCS
-    _, hmi_remap = remap_hmi_og_scale_n(hrt_map, hmi_map, out_shape = hmi_shape)
-
-    #take the submap of the hmi using hrt coords
-    top_right = hmi_remap.world_to_pixel(hrt_map.top_right_coord)
-    bottom_left = hmi_remap.world_to_pixel(hrt_map.bottom_left_coord)
-    
-    tr = np.array([top_right.x.value,top_right.y.value])
-    bl = np.array([bottom_left.x.value,bottom_left.y.value])
-    hmi_og_size =  hmi_remap.submap(bl*u.pix,top_right=tr*u.pix)
-    
-    #add padding so that extra pixels left over when shifting later
-    pad_tr = tr + 200
-    pad_bl = bl - 200
-    hmi_pad = hmi_remap.submap(pad_bl*u.pix,top_right=pad_tr*u.pix)
-    
-    #resample hrt map to hmi resolution
-    hrt_resampled_map = hrt_map.resample(hmi_og_size.dimensions*u.pix)
-    
-    #get residual rotation/cross-correlation
-    if r_in is None:
-        s = int(hrt_resampled_map.data.shape[0]*0.2)
-        imref = hrt_resampled_map.data[s:-s,s:-s]
-        imtemp = hmi_og_size.data[s:-s,s:-s]
-        r = imreg_dft.similarity(imref,imtemp, 
-                                 numiter=3,constraints=dict(scale=(1,0)))
-    else:
-        r = r_in
-   
-    #pollog transform on padded image
-    hmi_logpol = imreg_dft.transform_img(hmi_pad.data,scale=1,angle=r['angle'],tvec=r['tvec'])
-    
-    h = hmi_pad.fits_header
-    h.append(('SHIFTX',r['tvec'][1],'shift along X axis (HRT-pixel)'),end=True)
-    h.append(('SHIFTY',r['tvec'][0],'shift along Y axis (HRT-pixel)'),end=True)
-    h.append(('RANGLE',r['angle'],'rotation angle (deg)'),end=True)
-    print(r['angle'], r['tvec'][1], r['tvec'][0])
-    hmi_logpol = sunpy.map.Map((hmi_logpol,h))
-    
-    #submap on the padded cc-ed image to get the real size back
-    top_right = hmi_logpol.world_to_pixel(hrt_map.top_right_coord)
-    bottom_left = hmi_logpol.world_to_pixel(hrt_map.bottom_left_coord)
-    tr = np.array([top_right.x.value,top_right.y.value])
-    bl = np.array([bottom_left.x.value,bottom_left.y.value])
-    hmi_logpol = hmi_logpol.submap(bl*u.pix,top_right=tr*u.pix)
-    
-    print('--------------------------------------------------------------')
-    print(f"------------ Remap Time: {np.round(time.perf_counter() - start_time,3)} seconds")
-    print('--------------------------------------------------------------')
-    
-    return hrt_resampled_map, hmi_logpol, r
-
-
-def und(hrt, flip = True):
-    """correct for geometric distortion in hrt
-
-    Parameters
-    ----------
-    hrt : numpy.ndarray
-        data array from hrt.
-    flip : bool
-        Flip hrt in the y axis.
-
-    Returns
-    -------
-    hrt_und : numpy.ndarray
-        undistorted hrt image array.
-    """
-    def _Inv2(x_c,y_c,x_u,y_u,k):
-        r_u = np.sqrt((x_u-x_c)**2+(y_u-y_c)**2) 
-        x_d = x_c+(x_u-x_c)*(1-k*r_u**2)
-        y_d = y_c+(y_u-y_c)*(1-k*r_u**2)
-        return x_d,y_d
-    
-    if flip:
-        return hrt[:,::-1]
-    Nx = Ny = 2048
-    x = y = np.arange(Nx)
-    X,Y = np.meshgrid(x,y)
-    x_c = 1016
-    y_c = 982
-    k = 8e-09
-    hrt_und = np.zeros((Nx,Ny))
-    x_d, y_d = _Inv2(x_c,y_c,X,Y,k)
-    if flip:
-        return hrt_und[:,::-1]
-    else:
-        return hrt_und
