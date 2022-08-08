@@ -1,0 +1,12 @@
+./data_tutorial_files/HRT_field_stop.fits
+./data_tutorial_files/solo_L2_phi-fdt-blos_20220131T143008_V202206301253_0241310515.fits
+./data_tutorial_files/solo_L2_phi-hrt-blos_20220307T000009_V202206021608_0243070101.fits.gz
+./data_tutorial_files/solo_L2_phi-hrt-bmag_20220307T000009_V202206021608_0243070101.fits.gz
+./data_tutorial_files/solo_L2_phi-hrt-binc_20220307T000009_V202206021608_0243070101.fits.gz
+./data_tutorial_files/solo_L2_phi-hrt-bazi_20220307T000009_V202206021608_0243070101.fits.gz
+./data_tutorial_files/solo_L2_phi-hrt-vlos_20220307T000009_V202206021608_0243070101.fits.gz
+./data_tutorial_files/solo_L2_phi-hrt-icnt_20220307T000009_V202206021608_0243070101.fits.gz
+./data_tutorial_files/solo_L2_phi-hrt-stokes_20220307T000009_V202206021608_0243070101.fits.gz
+./data_tutorial_files/hmi.m_45s.20220131_143215_TAI.2.magnetogram.fits
+./data_tutorial_files/hmi.m_45s.20220307_000430_TAI.2.magnetogram.fits
+data_tutorial_files.zip
