@@ -2,15 +2,6 @@ import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-import time
-from astropy.wcs import WCS
-from astropy.coordinates import SkyCoord
-import reproject
-from reproject import reproject_adaptive
-from sunpy.coordinates import get_body_heliographic_stonyhurst, frames
-import sunpy.map
-from astropy import units as u
-import imreg_dft
 
 def load_field_stop(path = None):
     """load hrt field stop
@@ -26,7 +17,7 @@ def load_field_stop(path = None):
         the field stop of the HRT telescope.
     """
     if path is None:
-        path = "/scratch/slam/sinjan/solo_attic_fits/demod_mats_field_stops/HRT_field_stop.fits"
+        path = "./static/HRT_field_stop.fits"
     
     hdu_list_tmp = fits.open(path)
     field_stop = np.asarray(hdu_list_tmp[0].data, dtype=np.float32)

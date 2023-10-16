@@ -4,5 +4,3 @@ scipy
 astropy
 sunpy-soar
 matplotlib
-time
-reproject
