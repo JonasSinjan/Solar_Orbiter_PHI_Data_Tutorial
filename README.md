@@ -6,9 +6,16 @@ The original form can be found here: https://github.com/SolarOrbiterWorkshop/sol
 
 The tutorial has now been updated (October 2023)
 
-<img src="./static/philogo-1.png" width="220" align="left"/><br>
-
-----
+<img src="./static/philogo-1.png" width="220" align="left"/>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 ## Useful Links and Information
 
@@ -21,7 +28,6 @@ The tutorial has now been updated (October 2023)
 - [SOAR Inventory Plots](https://www.cosmos.esa.int/web/soar/inventory-plots)
 - [SOAR Python Download Github Gist](https://gist.github.com/JonasSinjan/e10053b972e5fb72057c078c7c275a5e)
 
-----
 
 ## Instrument Basics and Key properties
 
@@ -37,7 +43,6 @@ The tutorial has now been updated (October 2023)
 
 ![Alt Text](./static/sophi_fov_rotateSun_new.gif)
 
-----
 
 ## Setup and Installation
 
@@ -59,5 +64,3 @@ conda activate phi_tutorial
 pip install ipykernel
 python -m ipykernel install --user --name phi_tutorial --display-name "Python (phi_tutorial)"
 ```
-
-----
