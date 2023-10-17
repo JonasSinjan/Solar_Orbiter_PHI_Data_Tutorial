@@ -17,7 +17,7 @@ def load_field_stop(path = None):
         the field stop of the HRT telescope.
     """
     if path is None:
-        path = "./static/HRT_field_stop.fits"
+        path = "./data/HRT_field_stop.fits"
     
     hdu_list_tmp = fits.open(path)
     field_stop = np.asarray(hdu_list_tmp[0].data, dtype=np.float32)
