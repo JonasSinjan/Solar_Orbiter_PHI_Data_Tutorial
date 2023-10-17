@@ -1,5 +1,6 @@
 name: phi_tutorial
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - conda-forge/linux-64::_libgcc_mutex==0.1=conda_forge

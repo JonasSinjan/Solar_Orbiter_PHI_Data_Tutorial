@@ -1,0 +1,12 @@
+name: test_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - scipy
+  - astropy=5.0
+  - sunpy=3.1
+  - sunpy-soar
+  - matplotlib
+  - ipykernel
