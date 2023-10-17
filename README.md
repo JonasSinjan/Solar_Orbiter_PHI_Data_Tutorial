@@ -6,7 +6,7 @@ The original form can be found here: https://github.com/SolarOrbiterWorkshop/sol
 
 The tutorial has now been updated (October 2023)
 
-<img src="./static/philogo-1.png" width="220" align="left"/>
+<img src="./static/philogo-1.png" width="220" align="left"/><br>
 
 ----
 
