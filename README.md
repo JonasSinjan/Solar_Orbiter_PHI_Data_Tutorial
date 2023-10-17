@@ -29,7 +29,7 @@ The tutorial has now been updated (October 2023)
 - [SOAR Python Download Github Gist](https://gist.github.com/JonasSinjan/e10053b972e5fb72057c078c7c275a5e)
 
 
-## Instrument Basics and Key properties
+## Instrument Basics and Key Properties
 
 - Two telescopes:
   - HRT (High Resolution Telescope)
