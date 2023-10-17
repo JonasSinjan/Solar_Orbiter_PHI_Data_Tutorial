@@ -4,3 +4,4 @@ scipy
 astropy
 sunpy-soar
 matplotlib
+ipykernel
