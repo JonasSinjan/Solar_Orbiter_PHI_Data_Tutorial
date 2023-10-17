@@ -10,3 +10,4 @@ dependencies:
   - sunpy-soar
   - matplotlib
   - ipykernel
+  - reproject

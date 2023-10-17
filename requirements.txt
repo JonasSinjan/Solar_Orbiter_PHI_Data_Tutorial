@@ -5,3 +5,4 @@ astropy
 sunpy-soar
 matplotlib
 ipykernel
+reproject
