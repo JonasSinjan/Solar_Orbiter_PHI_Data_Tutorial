@@ -1,4 +1,4 @@
-numpy
+numpy==1.24.4
 scipy
 astropy==5.0
 sunpy-soar
@@ -7,4 +7,4 @@ ipykernel
 reproject
 astroquery
 jupyterlab
-sunpy==3.1
+sunpy==3.1.8
