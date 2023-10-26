@@ -7,4 +7,4 @@ ipykernel
 reproject
 astroquery
 jupyterlab
-sunpy[all]==3.1
+sunpy==3.1
