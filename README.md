@@ -58,7 +58,7 @@ Tested OS:
 - Linux Ubuntu
 
 ```bash=
-conda env create --name phi_tutorial --file=phi_tutorial.yml
+conda env create --name phi_tutorial --file=environment.yml
 ```
 
 Otherwise manually install packages listed in `requirements.txt` with pip
