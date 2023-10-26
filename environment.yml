@@ -3,11 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - numpy
-  - scipy
-  - astropy=5.0
-  - sunpy=3.1
-  - sunpy-soar
-  - matplotlib
-  - ipykernel
-  - reproject
+  - python==3.8
+  - pip
+  - pip:
+    - -r requirements.txt

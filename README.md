@@ -46,6 +46,14 @@ The tutorial has now been updated (October 2023)
 
 ## Setup and Installation
 
+Launch an online juypter notebook via Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/JonasSinjan/Solar_Orbiter_PHI_Data_Tutorial/HEAD)
+
+Locally:
+
+```bash=
+git clone https://github.com/JonasSinjan/Solar_Orbiter_PHI_Data_Tutorial.git
+```
+
 Tested OS:
 - Linux Ubuntu
 
