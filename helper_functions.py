@@ -55,7 +55,7 @@ def plot_fdt_phys_obs(inver_data, suptitle = None):
     
     #mean correct vlos
     vlos2 = inver_data[4,:,:]
-    vlos3 = vlos2 - np.mean(inver_data[4,512:1535,512:1535])
+    vlos3 = vlos2# - np.mean(inver_data[4,512:1535,512:1535])
         
     seis = plt.cm.seismic
     norm = plt.Normalize(-2, 2, clip = True)
@@ -122,10 +122,14 @@ def plot_hrt_phys_obs(inver_data, suptitle = None, field_stop = None):
     """
     if field_stop is None:
         field_stop = load_field_stop()[:,::-1]
+
+    #get dimensions of data if cropped
+    shape_x=inver_data.shape[1]
+    shape_y=inver_data.shape[0]
         
-    inver_data *= field_stop[np.newaxis,:,:]
+    inver_data *= field_stop[np.newaxis,shape_y,shape_x]
         
-    fs_idx = np.where(field_stop < 1)
+    fs_idx = np.where(field_stop[shape_y,shape_x] < 1)
     
     #create custom colormaps that are black in the field stop region
     gist = plt.cm.gist_heat
@@ -157,7 +161,17 @@ def plot_hrt_phys_obs(inver_data, suptitle = None, field_stop = None):
     
     #mean correct vlos
     vlos2 = inver_data[4,:,:]
-    vlos3 = vlos2 - np.mean(inver_data[4,512:1535,512:1535])
+    #normalise with central region, taking into account cropping cases
+    offset=2048-shape_x
+    start=512
+    end=1535
+    if offset > 1023:
+        start=0
+        end=shape_x-1
+    else:
+        start-=offset//2+1
+        end=start+1024
+    vlos3 = vlos2 - np.mean(inver_data[4,start:end,start:end])
     blos = inver_data[1,:,:] * np.cos(inver_data[2,:,:]/180*np.pi) #vlos
     
     if field_stop is not None:
